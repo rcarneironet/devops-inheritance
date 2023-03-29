@@ -1,0 +1,70 @@
+parameters:
+- name: terraformVersion
+  type: string
+- name: terraformWorkingDirectory
+  type: string
+- name: storageAccountName
+  type: string
+- name: storageAccountContainerName
+  type: string    
+
+variables:
+  - group: 'IAC_DEV'
+  - name: terraformVersion
+    value: '${{ parameters.terraformVersion }}'
+  - name: terraformWorkingDirectory
+    value: '${{ parameters.terraformWorkingDirectory }}'    
+  - name: storageAccountName
+    value: '${{ parameters.storageAccountName }}'  
+#  - name: storageAccountContainerName
+#    value: '${{ parameters.storageAccountContainerName }}'  
+
+stages:
+- stage: DEV
+  displayName: Publish Infra to Dev
+  jobs:
+    - job: Build_and_Publish
+      pool: 
+        vmImage: ubuntu-latest
+      
+      steps:
+      - task: ms-devlabs.custom-terraform-tasks.custom-terraform-installer-task.TerraformInstaller@0
+        displayName: 'Install Terraform'
+        inputs:
+          terraformVersion: $(terraformVersion)
+
+      - task: ms-devlabs.custom-terraform-tasks.custom-terraform-release-task.TerraformTaskV2@2
+        displayName: 'Terraform : azurerm'
+        inputs:
+          workingDirectory: '$(terraformWorkingDirectory)'
+          backendServiceArm: 'svc_clearsale'
+          backendAzureRmResourceGroupName: 'rg_demo_clearsale'
+          backendAzureRmStorageAccountName: $(storageAccountName)
+          backendAzureRmContainerName: $(storageAccountContainerName)
+          backendAzureRmKey: terraform.tfstate
+
+      - task: ms-devlabs.custom-terraform-tasks.custom-terraform-release-task.TerraformTaskV2@2
+        displayName: 'Terraform : azurerm'
+        inputs:
+          command: plan
+          workingDirectory: 'appservice'
+          environmentServiceNameAzureRM: 'svc_clearsale'
+
+      - task: ms-devlabs.custom-terraform-tasks.custom-terraform-release-task.TerraformTaskV2@2
+        displayName: 'Terraform : azurerm'
+        inputs:
+          command: apply
+          workingDirectory: 'appservice'
+          commandOptions: '-auto-approve '
+          environmentServiceNameAzureRM: 'svc_clearsale'
+
+#- stage: QA
+#  dependsOn: DEV
+#  displayName: Publish to QA
+#  jobs:
+#    - job: Build_and_Publish
+#      pool: 
+#        vmImage: ubuntu-latest
+#      steps:
+#      - script: echo Hello, world QA!
+#        displayName: 'Run a one-line script'      

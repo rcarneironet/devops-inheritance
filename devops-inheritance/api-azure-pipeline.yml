@@ -1,0 +1,23 @@
+trigger:
+  branches:
+    include:
+    - main
+  paths:
+    include:
+    - '*'
+    exclude:
+    - '**/*.yml'
+    - '**/*.yaml'
+
+resources:
+  repositories:
+    - repository: templates
+      type: git
+      name: Shared
+      ref: 'main'
+
+extends:
+  template: backend-dotnet6.yml@templates
+  parameters:
+      buildConfiguration: 'Release'
+      restoreBuildProjects: '**/*.csproj'

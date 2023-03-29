@@ -1,0 +1,25 @@
+trigger:
+  branches:
+    include:
+    - main
+  paths:
+    include:
+    - '*'
+    exclude:
+    - '**/*.yml'
+    - '**/*.yaml'
+
+resources:
+  repositories:
+    - repository: templates
+      type: git
+      name: Shared
+      ref: 'main'
+
+extends:
+  template: iac-terraform-appservice.yml@templates
+  parameters:
+      terraformVersion: '0.12.3'
+      terraformWorkingDirectory: 'appservice'
+      storageAccountName: 'sademoclearsale'
+      storageAccountContainerName: 'containerterraform'
